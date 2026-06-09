@@ -6,3 +6,6 @@ RUN mvn clean package -DskipTests
 # 2. 組み立てたプログラム（JARファイル）を取り出して、軽量なJava11環境で実行する
 FROM eclipse-temurin:11-jre
 COPY --from=build /target/demo-0.0.1-SNAPSHOT.jar app.jar
+EXPOSE 10000  <!-- 💡 Renderの標準ポート「10000」に合わせました -->
+ENTRYPOINT ["java", "-jar", "app.jar"]
+
