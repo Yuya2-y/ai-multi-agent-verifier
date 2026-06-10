@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://thymeleaf.org" lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>マルチエージェントAIチャット</title>
+    <link href="https://jsdelivr.net" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container py-5" style="max-width: 800px;">
+    <h2 class="mb-4 text-center">🤖 マルチエージェント・検証チャットアプリ</h2>
+    
+    <!-- 質問入力フォーム -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form th:action="@{/chat}" method="post">
+                <div class="mb-3">
+                    <label for="query" class="form-label">質問を入力してください</label>
+                    <input type="text" class="form-control" id="query" name="query" th:value="${query}" placeholder="例：日本で一番高い山と、二番目に高い山について教えて" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">AIエージェントに議論させる</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 結果表示エリア -->
+    <div th:if="${result != null}">
+        <!-- 最終回答 -->
+        <div class="card shadow-sm mb-4 border-success">
+            <div class="card-header bg-success text-white">✨ 最終回答</div>
+            <div class="card-body">
+                <p class="card-text" style="white-space: pre-wrap;" th:text="${result.final_answer}"></p>
+            </div>
+        </div>
+
+        <!-- 信頼性スコア -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-dark text-white">📊 回答の信頼度</div>
+            <div class="card-body">
+                <h3 class="card-title text-center mb-3" th:text="${result.confidence_score} + ' %'"></h3>
+                <div class="progress" style="height: 25px;">
+                    <div class="progress-bar progress-bar-striped bg-info" role="progressbar" 
+                         th:style="'width: ' + ${result.confidence_score} + '%'" 
+                         th:aria-valuenow="${result.confidence_score}" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 議論のプロセス (アコーディオン) -->
+        <div class="accordion shadow-sm" id="processAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingOne">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                        🔍 AIエージェントたちの議論のプロセスを見る
+                    </button>
+                </h2>
+                <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#processAccordion">
+                    <div class="accordion-body bg-white">
+                        <h5>【ステップ1: 最初の回答】</h5>
+                        <p class="text-muted" style="white-space: pre-wrap;" th:text="${result.draft_answer}"></p>
+                        <hr>
+                        <h5>【ステップ2: 検証官の批判・ダメ出し】</h5>
+                        <p class="text-danger" style="white-space: pre-wrap;" th:text="${result.critique}"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://jsdelivr.net"></script>
+</body>
+</html>
