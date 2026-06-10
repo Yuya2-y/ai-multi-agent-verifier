@@ -18,7 +18,8 @@ public class AiAgentService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
     
-    private final String API_URL = "https://googleapis.com";
+    // ⭕️ 【修正箇所】正しいGeminiの住所と、?key= をここに記述しました
+    private final String API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=";
 
     public ApiResponseDto processMultiAgentChat(String userQuery) {
         ApiResponseDto resultDto = new ApiResponseDto();
@@ -51,6 +52,7 @@ public class AiAgentService {
     }
 
     private String callGemini(String systemPrompt, String userPrompt, boolean forceJson) throws Exception {
+        // ここで URLの末尾の「?key=」と「@Valueから読み込まれたAPIキー」が綺麗に合体します
         String completeUrl = API_URL + apiKey;
 
         HttpHeaders headers = new HttpHeaders();
