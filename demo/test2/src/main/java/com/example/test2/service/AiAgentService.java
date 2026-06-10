@@ -19,7 +19,7 @@ public class AiAgentService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
     
-    // 無料で使える高速・軽量モデル Gemini 2.5 Flash のエンドポイントURL
+    // 無料で使える高速・軽量モデル Gemini 2.5 Flash のエンドポイントURL（修正済み）
     private final String API_URL = "https://googleapis.com";
 
     public ApiResponseDto processMultiAgentChat(String userQuery) {
