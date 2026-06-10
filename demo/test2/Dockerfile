@@ -1,11 +1,15 @@
-FROM maven:3.8.5-openjdk-17 AS build
+# 1段階目: アプリケーションのビルド
+FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
-COPY pom.xml .
-COPY src ./src
+COPY . .
 RUN mvn clean package -DskipTests
 
-FROM openjdk:17-jdk-slim
+# 2段階目: アプリケーションの実行（エラーの原因となっていた箇所を修正）
+FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
+
+# Renderのポート10000番にEXPOSE設定
 EXPOSE 10000
-ENTRYPOINT ["java", "-Dserver.port=10000", "-jar", "app.jar"]
+
+ENTRYPOINT ["java", "-jar", "app.jar"]
