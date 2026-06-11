@@ -27,7 +27,7 @@ public class AiAgentService {
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=";
 
     // GroqのURL
-    private final String GROQ_API_URL = "https://groq.com";
+    private final String GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
     public ApiResponseDto processMultiAgentChat(String userQuery) {
         ApiResponseDto resultDto = new ApiResponseDto();
