@@ -18,8 +18,9 @@ public class AiAgentService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
     
-    // ⭕️ 【修正箇所】正しいGeminiの住所と、?key= をここに記述しました
-    private final String API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=";
+ // gemini-2.0-flash（現時点で最新・無料枠あり・推奨）
+private final String API_URL = 
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=";
 
     public ApiResponseDto processMultiAgentChat(String userQuery) {
         ApiResponseDto resultDto = new ApiResponseDto();
