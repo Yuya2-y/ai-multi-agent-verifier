@@ -20,7 +20,7 @@ public class AiAgentService {
     
  // gemini-2.0-flash（現時点で最新・無料枠あり・推奨）
 private final String API_URL = 
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=";
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=";
 
     public ApiResponseDto processMultiAgentChat(String userQuery) {
         ApiResponseDto resultDto = new ApiResponseDto();
@@ -52,37 +52,50 @@ private final String API_URL =
         return resultDto;
     }
 
-    private String callGemini(String systemPrompt, String userPrompt, boolean forceJson) throws Exception {
-        // ここで URLの末尾の「?key=」と「@Valueから読み込まれたAPIキー」が綺麗に合体します
-        String completeUrl = API_URL + apiKey;
+private String callGemini(String systemPrompt, String userPrompt, boolean forceJson) throws Exception {
+    String completeUrl = API_URL + apiKey;
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
 
-        Map<String, Object> requestBody = new HashMap<>();
-        String totalPrompt = "【前提指示】\n" + systemPrompt + "\n\n【入力内容】\n" + userPrompt;
-        
-        Map<String, Object> textPart = Map.of("text", totalPrompt);
-        Map<String, Object> contentMap = Map.of("parts", List.of(textPart));
-        requestBody.put("contents", List.of(contentMap));
+    Map<String, Object> requestBody = new HashMap<>();
+    String totalPrompt = "【前提指示】\n" + systemPrompt + "\n\n【入力内容】\n" + userPrompt;
 
-        if (forceJson) {
-            Map<String, Object> generationConfig = Map.of("responseMimeType", "application/json");
-            requestBody.put("generationConfig", generationConfig);
-        }
+    Map<String, Object> textPart = Map.of("text", totalPrompt);
+    Map<String, Object> contentMap = Map.of("parts", List.of(textPart));
+    requestBody.put("contents", List.of(contentMap));
 
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-        ResponseEntity<String> response = restTemplate.postForEntity(completeUrl, entity, String.class);
-
-        JsonNode resRoot = objectMapper.readTree(response.getBody());
-        String aiText = resRoot.path("candidates").get(0)
-                               .path("content").path("parts").get(0)
-                               .path("text").asText();
-
-        if (forceJson) {
-            aiText = aiText.replaceAll("```json", "").replaceAll("```", "").trim();
-        }
-
-        return aiText;
+    if (forceJson) {
+        Map<String, Object> generationConfig = Map.of("responseMimeType", "application/json");
+        requestBody.put("generationConfig", generationConfig);
     }
+
+    HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+    int maxRetries = 3;
+    for (int i = 0; i < maxRetries; i++) {
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(completeUrl, entity, String.class);
+
+            JsonNode resRoot = objectMapper.readTree(response.getBody());
+            String aiText = resRoot.path("candidates").get(0)
+                                   .path("content").path("parts").get(0)
+                                   .path("text").asText();
+
+            if (forceJson) {
+                aiText = aiText.replaceAll("```json", "").replaceAll("```", "").trim();
+            }
+            return aiText;
+
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            if (e.getStatusCode().value() == 429 && i < maxRetries - 1) {
+                System.out.println("429エラー。40秒後にリトライします... (" + (i + 1) + "回目)");
+                Thread.sleep(40000);
+            } else {
+                throw e;
+            }
+        }
+    }
+    throw new Exception("最大リトライ回数を超えました");
+}
 }
