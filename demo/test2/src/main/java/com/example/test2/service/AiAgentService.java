@@ -15,8 +15,8 @@ public class AiAgentService {
     @Value("${gemini.api.key}")
     private String apiKey;
 
-    // application.properties から Groq のキーを読み込む
-    @Value("${groq.api.key}")
+    // 大文字・小文字どちらの環境変数でも柔軟に読み込める設定に強化
+    @Value("${groq.api.key:${GROQ_API_KEY:}}")
     private String groqApiKey;
 
     private final RestTemplate restTemplate = new RestTemplate();
@@ -26,7 +26,7 @@ public class AiAgentService {
     private final String API_URL = 
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=";
 
-    // GroqのURL
+    // 正しいGroqの窓口（APIエンドポイント）URL
     private final String GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
     public ApiResponseDto processMultiAgentChat(String userQuery) {
@@ -112,9 +112,14 @@ public class AiAgentService {
                 return aiText;
 
             } catch (org.springframework.web.client.HttpClientErrorException e) {
-                if (e.getStatusCode().value() == 429 && i < maxRetries - 1) {
-                    System.out.println("429エラー。40秒後にリトライします... (" + (i + 1) + "回目)");
-                    Thread.sleep(40000);
+                // 🔴 変更ポイント: 429（無料枠制限）エラーの時は、40秒待たずに即座に例外を投げてフォールバックさせる
+                if (e.getStatusCode().value() == 429) {
+                    System.out.println("⚠️ Geminiが429エラーを返しました。待機せず即座にフォールバックします。");
+                    throw e;
+                } else if (i < maxRetries - 1) {
+                    // その他のエラーの場合は、一応少し待ってリトライ
+                    System.out.println("一時的なエラー。2秒後にリトライします... (" + (i + 1) + "回目)");
+                    Thread.sleep(2000);
                 } else {
                     throw e;
                 }
@@ -129,7 +134,8 @@ public class AiAgentService {
     private String callGroq(String systemPrompt, String userPrompt, boolean forceJson) throws Exception {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(groqApiKey); // GroqのAPIキーをセット
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.set("Authorization", "Bearer " + groqApiKey.trim()); // 確実に認証ヘッダーをセット
 
         // リクエストボディの作成（OpenAI互換フォーマット）
         Map<String, Object> requestBody = new HashMap<>();
@@ -160,8 +166,11 @@ public class AiAgentService {
             }
             return aiText;
 
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            System.err.println("❌ Groq API エラーレスポンス: " + e.getResponseBodyAsString());
+            throw e;
         } catch (Exception e) {
-            System.err.println("❌ Groqの呼び出しにも失敗しました: " + e.getMessage());
+            System.err.println("❌ Groqの呼び出しに失敗しました: " + e.getMessage());
             throw e;
         }
     }
