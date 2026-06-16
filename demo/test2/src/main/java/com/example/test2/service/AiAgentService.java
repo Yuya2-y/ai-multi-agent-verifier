@@ -1,6 +1,8 @@
 package com.example.test2.service;
 
 import com.example.test2.dto.ApiResponseDto;
+import com.example.test2.entity.ChatHistory;
+import com.example.test2.repository.ChatHistoryRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +23,7 @@ public class AiAgentService {
 
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ChatHistoryRepository chatHistoryRepository;
     
     // GeminiのURL
     private final String API_URL = 
@@ -28,6 +31,17 @@ public class AiAgentService {
 
     // 正しいGroqの窓口（APIエンドポイント）URL
     private final String GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+
+    public AiAgentService(ChatHistoryRepository chatHistoryRepository) {
+        this.chatHistoryRepository = chatHistoryRepository;
+    }
+
+    /**
+     * 全ての会話履歴を取得（新しい順）
+     */
+    public List<ChatHistory> getAllChatHistory() {
+        return chatHistoryRepository.findAllByOrderByCreatedAtDesc();
+    }
 
     public ApiResponseDto processMultiAgentChat(String userQuery) {
         ApiResponseDto resultDto = new ApiResponseDto();
@@ -51,6 +65,15 @@ public class AiAgentService {
             JsonNode root = objectMapper.readTree(jsonResponse);
             resultDto.setFinal_answer(root.path("final_answer").asText());
             resultDto.setConfidence_score(root.path("confidence_score").asInt());
+
+            // 会話履歴をDBに保存
+            ChatHistory chatHistory = new ChatHistory();
+            chatHistory.setQuery(userQuery);
+            chatHistory.setFinalAnswer(resultDto.getFinal_answer());
+            chatHistory.setConfidenceScore(resultDto.getConfidence_score());
+            chatHistory.setDraftAnswer(resultDto.getDraft_answer());
+            chatHistory.setCritique(resultDto.getCritique());
+            chatHistoryRepository.save(chatHistory);
 
         } catch (Exception e) {
             resultDto.setFinal_answer("エラーが発生しました: " + e.getMessage());
