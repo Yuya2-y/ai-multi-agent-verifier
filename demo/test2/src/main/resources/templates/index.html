@@ -333,7 +333,7 @@
         <div class="input-section">
             <form th:action="@{/chat}" method="post" id="chatForm">
                 <div class="search-box">
-                    <input type="text" id="query" name="query" th:value="${query}" placeholder="質問を入力..." required autofocus>
+                    <input type="text" id="query" name="query" th:value="${result == null ? query : ''}" placeholder="質問を入力..." required autofocus>
                     <button type="submit" class="search-button" id="submitBtn">検索</button>
                 </div>
             </form>
@@ -341,6 +341,10 @@
 
         <!-- 結果表示エリア -->
         <div class="results-container" th:if="${result != null}">
+            <div class="result-card" style="border-left-color: #34a853; margin-bottom: 1rem;">
+                <h3>💬 質問履歴</h3>
+                <p th:text="${query}"></p>
+            </div>
             <!-- 最終回答 -->
             <div class="result-card">
                 <h3>✨ 最終回答</h3>
@@ -389,11 +393,6 @@
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
             btn.textContent = '処理中...';
-            
-            // 送信後に入力欄をクリア
-            setTimeout(() => {
-                document.getElementById('query').value = '';
-            }, 100);
         });
     </script>
 </body>
