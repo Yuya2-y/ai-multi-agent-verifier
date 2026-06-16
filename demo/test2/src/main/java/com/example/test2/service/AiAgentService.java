@@ -63,6 +63,12 @@ public class AiAgentService {
      * Geminiを呼び出すメソッド（429エラーや最大リトライ超過時にGroqへフォールバックする）
      */
     private String callGeminiWithFallback(String systemPrompt, String userPrompt, boolean forceJson) throws Exception {
+        // Gemini APIキーが未設定または空文字の場合は起動時に例外にならないよう直接Groqへフォールバックする
+        if (apiKey == null || apiKey.trim().isEmpty()) {
+            System.out.println("⚠️ Gemini APIキーが未設定です。直接Groq (Llama 3.3) へフォールバックします。");
+            return callGroq(systemPrompt, userPrompt, forceJson);
+        }
+
         try {
             // まずは従来のGemini呼び出しを試みる
             return callGemini(systemPrompt, userPrompt, forceJson);
