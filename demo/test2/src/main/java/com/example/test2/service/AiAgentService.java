@@ -43,6 +43,10 @@ public class AiAgentService {
         return chatHistoryRepository.findAllByOrderByCreatedAtDesc();
     }
 
+    public ChatHistory getChatHistoryById(Long id) {
+        return chatHistoryRepository.findById(id).orElse(null);
+    }
+
     public ApiResponseDto processMultiAgentChat(String userQuery) {
         ApiResponseDto resultDto = new ApiResponseDto();
         try {

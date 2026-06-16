@@ -422,9 +422,9 @@
             <div th:if="${#lists.isEmpty(chatHistory)}" style="padding: 1rem; text-align: center; color: #9aa0a6; font-size: 0.85rem;">
                 まだ履歴がありません
             </div>
-            <div th:each="item : ${chatHistory}" class="history-item" th:data-id="${item.id}" onclick="loadHistory(this)">
+            <div th:each="item : ${chatHistory}" class="history-item" th:classappend="${selectedHistory != null and selectedHistory.id == item.id} ? ' active'" th:data-id="${item.id}" onclick="loadHistory(this)">
                 <strong th:text="${#strings.abbreviate(item.query, 40)}"></strong>
-                <div style="font-size: 0.75rem; color: #9aa0a6; margin-top: 0.25rem;" th:text="${#temporals.format(item.created_at, 'yyyy/MM/dd HH:mm')}"></div>
+                <div style="font-size: 0.75rem; color: #9aa0a6; margin-top: 0.25rem;" th:text="${#temporals.format(item.createdAt, 'yyyy/MM/dd HH:mm')}"></div>
             </div>
         </div>
         <div class="sidebar-footer">
@@ -444,30 +444,30 @@
             <div class="input-section">
                 <form th:action="@{/chat}" method="post" id="chatForm">
                     <div class="search-box">
-                        <input type="text" id="query" name="query" th:value="${result == null ? query : ''}" placeholder="質問を入力..." required autofocus>
+                        <input type="text" id="query" name="query" th:value="${selectedHistory != null ? selectedHistory.query : (result == null ? query : '')}" placeholder="質問を入力..." required autofocus>
                         <button type="submit" class="search-button" id="submitBtn">検索</button>
                     </div>
                 </form>
             </div>
 
             <!-- 結果表示エリア -->
-            <div class="results-container" th:if="${result != null}">
+            <div class="results-container" th:if="${result != null or selectedHistory != null}">
                 <div class="result-card" style="border-left-color: #34a853; margin-bottom: 1rem;">
-                    <h3>💬 質問履歴</h3>
-                    <p th:text="${query}"></p>
+                    <h3>💬 選択中の会話</h3>
+                    <p th:text="${selectedHistory != null ? selectedHistory.query : query}"></p>
                 </div>
                 <!-- 最終回答 -->
                 <div class="result-card">
                     <h3>✨ 最終回答</h3>
-                    <p th:text="${result.final_answer}"></p>
+                    <p th:text="${selectedHistory != null ? selectedHistory.finalAnswer : result.final_answer}"></p>
                 </div>
 
                 <!-- 信頼性スコア -->
                 <div class="confidence-section">
                     <div class="confidence-label">📊 信頼度</div>
-                    <div class="confidence-score" th:text="${result.confidence_score} + '%'"></div>
+                    <div class="confidence-score" th:text="${selectedHistory != null ? selectedHistory.confidenceScore + '%' : result.confidence_score + '%'}"></div>
                     <div class="progress-bar">
-                        <div class="progress-fill" th:style="'width: ' + ${result.confidence_score} + '%'"></div>
+                        <div class="progress-fill" th:style="'width: ' + (${selectedHistory != null ? selectedHistory.confidenceScore : result.confidence_score}) + '%'" ></div>
                     </div>
                 </div>
 
@@ -481,11 +481,11 @@
                         <div class="process-body">
                             <div class="process-step">
                                 <div class="step-title">【ステップ1】専門家の初期回答</div>
-                                <div class="step-content" th:text="${result.draft_answer}"></div>
+                                <div class="step-content" th:text="${selectedHistory != null ? selectedHistory.draftAnswer : result.draft_answer}"></div>
                             </div>
                             <div class="process-step">
                                 <div class="step-title">【ステップ2】検証官の批判・改善案</div>
-                                <div class="step-content" th:text="${result.critique}"></div>
+                                <div class="step-content" th:text="${selectedHistory != null ? selectedHistory.critique : result.critique}"></div>
                             </div>
                         </div>
                     </div>
@@ -503,10 +503,9 @@
 
         function loadHistory(element) {
             const historyId = element.getAttribute('data-id');
-            // 履歴をクリックした場合の処理を追加
-            console.log('Load history:', historyId);
-            // サーバーから詳細を取得して表示する処理をここに追加可能
-            // 例: fetch('/history/' + historyId).then(...)
+            if (historyId) {
+                window.location.href = '/history/' + historyId;
+            }
         }
 
         document.getElementById('chatForm').addEventListener('submit', function() {

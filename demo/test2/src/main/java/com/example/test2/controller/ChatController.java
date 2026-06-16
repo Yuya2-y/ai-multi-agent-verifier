@@ -22,6 +22,8 @@ public class ChatController {
     public String index(Model model) {
         List<ChatHistory> chatHistory = aiAgentService.getAllChatHistory();
         model.addAttribute("chatHistory", chatHistory);
+        model.addAttribute("query", "");
+        model.addAttribute("selectedHistory", null);
         return "index";
     }
 
@@ -33,9 +35,20 @@ public class ChatController {
         ApiResponseDto result = aiAgentService.processMultiAgentChat(query);
         model.addAttribute("query", query);
         model.addAttribute("result", result);
+        model.addAttribute("selectedHistory", null);
         
         List<ChatHistory> chatHistory = aiAgentService.getAllChatHistory();
         model.addAttribute("chatHistory", chatHistory);
+        return "index";
+    }
+
+    @GetMapping("/history/{id}")
+    public String viewHistory(@PathVariable Long id, Model model) {
+        ChatHistory selectedHistory = aiAgentService.getChatHistoryById(id);
+        List<ChatHistory> chatHistory = aiAgentService.getAllChatHistory();
+        model.addAttribute("selectedHistory", selectedHistory);
+        model.addAttribute("chatHistory", chatHistory);
+        model.addAttribute("query", selectedHistory != null ? selectedHistory.getQuery() : "");
         return "index";
     }
 }
