@@ -24,19 +24,40 @@ public class ChatController {
         model.addAttribute("chatHistory", chatHistory);
         model.addAttribute("query", "");
         model.addAttribute("selectedHistory", null);
+        model.addAttribute("canInput", false);
+        return "index";
+    }
+
+    @GetMapping("/new")
+    public String newConversation(Model model) {
+        List<ChatHistory> chatHistory = aiAgentService.getAllChatHistory();
+        model.addAttribute("chatHistory", chatHistory);
+        model.addAttribute("query", "");
+        model.addAttribute("result", null);
+        model.addAttribute("selectedHistory", null);
+        model.addAttribute("canInput", true);
         return "index";
     }
 
     @PostMapping("/chat")
-    public String chat(@RequestParam("query") String query, Model model) {
+    public String chat(@RequestParam("query") String query,
+                       @RequestParam(value = "historyId", required = false) Long historyId,
+                       Model model) {
         if (query == null || query.trim().isEmpty()) {
             return "redirect:/";
         }
-        ApiResponseDto result = aiAgentService.processMultiAgentChat(query);
+
+        ChatHistory selectedHistory = null;
+        if (historyId != null) {
+            selectedHistory = aiAgentService.getChatHistoryById(historyId);
+        }
+
+        ApiResponseDto result = aiAgentService.processMultiAgentChat(query, selectedHistory);
         model.addAttribute("query", query);
         model.addAttribute("result", result);
-        model.addAttribute("selectedHistory", null);
-        
+        model.addAttribute("selectedHistory", selectedHistory);
+        model.addAttribute("canInput", true);
+
         List<ChatHistory> chatHistory = aiAgentService.getAllChatHistory();
         model.addAttribute("chatHistory", chatHistory);
         return "index";
@@ -45,10 +66,14 @@ public class ChatController {
     @GetMapping("/history/{id}")
     public String viewHistory(@PathVariable Long id, Model model) {
         ChatHistory selectedHistory = aiAgentService.getChatHistoryById(id);
+        if (selectedHistory == null) {
+            return "redirect:/";
+        }
         List<ChatHistory> chatHistory = aiAgentService.getAllChatHistory();
         model.addAttribute("selectedHistory", selectedHistory);
         model.addAttribute("chatHistory", chatHistory);
-        model.addAttribute("query", selectedHistory != null ? selectedHistory.getQuery() : "");
+        model.addAttribute("query", "");
+        model.addAttribute("canInput", true);
         return "index";
     }
 }

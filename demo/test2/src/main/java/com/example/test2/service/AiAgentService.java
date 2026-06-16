@@ -48,14 +48,29 @@ public class AiAgentService {
     }
 
     public ApiResponseDto processMultiAgentChat(String userQuery) {
+        return processMultiAgentChat(userQuery, null);
+    }
+
+    public ApiResponseDto processMultiAgentChat(String userQuery, ChatHistory contextHistory) {
         ApiResponseDto resultDto = new ApiResponseDto();
         try {
-            String draft = callGeminiWithFallback("あなたは親切な専門家です。質問に詳しく答えてください。", userQuery, false);
+            String initialPrompt = "あなたは親切な専門家です。質問に詳しく答えてください。";
+            String inputText;
+            if (contextHistory != null) {
+                initialPrompt = "あなたは親切な専門家です。前回の会話を踏まえて、続きの質問に答えてください。";
+                inputText = "【前回の質問】:\n" + contextHistory.getQuery() + "\n\n" +
+                            "【前回の最終回答】:\n" + contextHistory.getFinalAnswer() + "\n\n" +
+                            "【今回の追加質問】:\n" + userQuery;
+            } else {
+                inputText = userQuery;
+            }
+
+            String draft = callGeminiWithFallback(initialPrompt, inputText, false);
             resultDto.setDraft_answer(draft);
 
             Thread.sleep(1500);
 
-            String critiquePrompt = "【元の質問】:\n" + userQuery + "\n\n【提出された回答】:\n" + draft;
+            String critiquePrompt = "【元の質問】:\n" + inputText + "\n\n【提出された回答】:\n" + draft;
             String critique = callGeminiWithFallback("あなたは厳格な検証官です。提出された回答にウソや矛盾がないか厳しく批判し、修正案を出してください。", critiquePrompt, false);
             resultDto.setCritique(critique);
 

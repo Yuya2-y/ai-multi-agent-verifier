@@ -428,7 +428,7 @@
             </div>
         </div>
         <div class="sidebar-footer">
-            <a href="/" style="color: #1f71e0; text-decoration: none;">新しい会話を開始</a>
+            <a href="/new" style="color: #1f71e0; text-decoration: none;">新しい会話を開始</a>
         </div>
     </div>
 
@@ -443,11 +443,15 @@
             <!-- 入力フォーム -->
             <div class="input-section">
                 <form th:action="@{/chat}" method="post" id="chatForm">
+                    <input type="hidden" name="historyId" th:value="${selectedHistory != null ? selectedHistory.id : ''}" />
                     <div class="search-box">
-                        <input type="text" id="query" name="query" th:value="${selectedHistory != null ? selectedHistory.query : (result == null ? query : '')}" placeholder="質問を入力..." required autofocus>
-                        <button type="submit" class="search-button" id="submitBtn">検索</button>
+                        <input type="text" id="query" name="query" th:value="${result == null && selectedHistory != null ? selectedHistory.query : query}" placeholder="質問を入力..." th:disabled="${!canInput}" required autofocus>
+                        <button type="submit" class="search-button" id="submitBtn" th:disabled="${!canInput}">検索</button>
                     </div>
                 </form>
+                <div th:if="${!canInput}" style="margin-top: 1rem; color: #5f6368; font-size: 0.9rem;">
+                    会話を開始するか、左側の履歴を選択してください。
+                </div>
             </div>
 
             <!-- 結果表示エリア -->
