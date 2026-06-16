@@ -1,6 +1,7 @@
 package com.example.test2.service;
 
 import com.example.test2.dto.ApiResponseDto;
+import com.example.test2.dto.ChatResultDto;
 import com.example.test2.entity.ChatHistory;
 import com.example.test2.repository.ChatHistoryRepository;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -47,19 +48,20 @@ public class AiAgentService {
         return chatHistoryRepository.findById(id).orElse(null);
     }
 
-    public ApiResponseDto processMultiAgentChat(String userQuery) {
+    public ChatResultDto processMultiAgentChat(String userQuery) {
         return processMultiAgentChat(userQuery, null);
     }
 
-    public ApiResponseDto processMultiAgentChat(String userQuery, ChatHistory contextHistory) {
+    public ChatResultDto processMultiAgentChat(String userQuery, ChatHistory contextHistory) {
         ApiResponseDto resultDto = new ApiResponseDto();
+        ChatResultDto chatResultDto = new ChatResultDto();
         try {
             String initialPrompt = "あなたは親切な専門家です。質問に詳しく答えてください。";
             String inputText;
             if (contextHistory != null) {
                 initialPrompt = "あなたは親切な専門家です。前回の会話を踏まえて、続きの質問に答えてください。";
-                inputText = "【前回の質問】:\n" + contextHistory.getQuery() + "\n\n" +
-                            "【前回の最終回答】:\n" + contextHistory.getFinalAnswer() + "\n\n" +
+                String previousLog = contextHistory.getConversationLog() != null ? contextHistory.getConversationLog() : "";
+                inputText = "【前回までの会話】:\n" + previousLog + "\n\n" +
                             "【今回の追加質問】:\n" + userQuery;
             } else {
                 inputText = userQuery;
@@ -86,19 +88,42 @@ public class AiAgentService {
             resultDto.setConfidence_score(root.path("confidence_score").asInt());
 
             // 会話履歴をDBに保存
-            ChatHistory chatHistory = new ChatHistory();
-            chatHistory.setQuery(userQuery);
-            chatHistory.setFinalAnswer(resultDto.getFinal_answer());
-            chatHistory.setConfidenceScore(resultDto.getConfidence_score());
-            chatHistory.setDraftAnswer(resultDto.getDraft_answer());
-            chatHistory.setCritique(resultDto.getCritique());
-            chatHistoryRepository.save(chatHistory);
+            if (contextHistory == null) {
+                ChatHistory chatHistory = new ChatHistory();
+                chatHistory.setQuery(userQuery);
+                chatHistory.setFinalAnswer(resultDto.getFinal_answer());
+                chatHistory.setConfidenceScore(resultDto.getConfidence_score());
+                chatHistory.setDraftAnswer(resultDto.getDraft_answer());
+                chatHistory.setCritique(resultDto.getCritique());
+                chatHistory.setSessionTitle(createSessionTitle(userQuery));
+                chatHistory.setConversationLog(buildConversationLog(userQuery, resultDto));
+                chatHistoryRepository.save(chatHistory);
+                chatResultDto.setChatHistory(chatHistory);
+            } else {
+                contextHistory.setQuery(userQuery);
+                contextHistory.setFinalAnswer(resultDto.getFinal_answer());
+                contextHistory.setConfidenceScore(resultDto.getConfidence_score());
+                contextHistory.setDraftAnswer(resultDto.getDraft_answer());
+                contextHistory.setCritique(resultDto.getCritique());
+                String updatedLog = contextHistory.getConversationLog();
+                if (updatedLog == null) {
+                    updatedLog = "";
+                }
+                if (!updatedLog.isEmpty()) {
+                    updatedLog += "\n\n";
+                }
+                updatedLog += buildConversationLog(userQuery, resultDto);
+                contextHistory.setConversationLog(updatedLog);
+                chatHistoryRepository.save(contextHistory);
+                chatResultDto.setChatHistory(contextHistory);
+            }
 
         } catch (Exception e) {
             resultDto.setFinal_answer("エラーが発生しました: " + e.getMessage());
             resultDto.setConfidence_score(0);
         }
-        return resultDto;
+        chatResultDto.setResult(resultDto);
+        return chatResultDto;
     }
 
     /**
@@ -221,5 +246,19 @@ public class AiAgentService {
             System.err.println("❌ Groqの呼び出しに失敗しました: " + e.getMessage());
             throw e;
         }
+    }
+
+    private String createSessionTitle(String initialQuery) {
+        if (initialQuery == null) {
+            return "新しい会話";
+        }
+        if (initialQuery.length() <= 36) {
+            return initialQuery;
+        }
+        return initialQuery.substring(0, 36) + "...";
+    }
+
+    private String buildConversationLog(String userQuery, ApiResponseDto resultDto) {
+        return "User: " + userQuery + "\nAssistant: " + resultDto.getFinal_answer();
     }
 }

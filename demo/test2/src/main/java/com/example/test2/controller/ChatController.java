@@ -52,7 +52,10 @@ public class ChatController {
             selectedHistory = aiAgentService.getChatHistoryById(historyId);
         }
 
-        ApiResponseDto result = aiAgentService.processMultiAgentChat(query, selectedHistory);
+        var chatResult = aiAgentService.processMultiAgentChat(query, selectedHistory);
+        ApiResponseDto result = chatResult.getResult();
+        selectedHistory = chatResult.getChatHistory();
+
         model.addAttribute("query", query);
         model.addAttribute("result", result);
         model.addAttribute("selectedHistory", selectedHistory);

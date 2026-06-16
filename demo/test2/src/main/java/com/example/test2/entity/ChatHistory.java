@@ -32,6 +32,12 @@ public class ChatHistory {
     @Column(columnDefinition = "TEXT")
     private String critique;
     
+    @Column(columnDefinition = "TEXT")
+    private String sessionTitle;
+    
+    @Column(columnDefinition = "TEXT")
+    private String conversationLog;
+    
     private LocalDateTime createdAt;
     
     @PrePersist
