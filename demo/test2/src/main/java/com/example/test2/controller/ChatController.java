@@ -69,7 +69,7 @@ public class ChatController {
         ApiResponseDto result = chatResult.getResult();
         selectedHistory = chatResult.getChatHistory();
 
-        model.addAttribute("query", query);
+        model.addAttribute("query", "");
         model.addAttribute("result", result);
         model.addAttribute("selectedHistory", selectedHistory);
         model.addAttribute("canInput", true);
