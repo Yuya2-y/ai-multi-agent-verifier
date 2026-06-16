@@ -389,6 +389,11 @@
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
             btn.textContent = '処理中...';
+            
+            // 送信後に入力欄をクリア
+            setTimeout(() => {
+                document.getElementById('query').value = '';
+            }, 100);
         });
     </script>
 </body>
