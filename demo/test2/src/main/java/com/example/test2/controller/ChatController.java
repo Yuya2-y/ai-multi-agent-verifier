@@ -24,7 +24,7 @@ public class ChatController {
         model.addAttribute("chatHistory", chatHistory);
         model.addAttribute("query", "");
         model.addAttribute("selectedHistory", null);
-        model.addAttribute("canInput", false);
+        model.addAttribute("canInput", true);
         return "index";
     }
 
