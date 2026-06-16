@@ -89,6 +89,21 @@
             padding: 2rem 1rem 1rem;
             background: white;
             border-bottom: 1px solid #e8e8e8;
+            position: relative;
+        }
+
+        .user-info {
+            position: absolute;
+            top: 1.5rem;
+            right: 1rem;
+            font-size: 0.85rem;
+            color: #5f6368;
+        }
+
+        .user-info a {
+            color: #1f71e0;
+            text-decoration: none;
+            margin-left: 0.75rem;
         }
 
         .logo {
@@ -430,6 +445,10 @@
         </div>
         <div class="sidebar-footer">
             <a href="/new" style="color: #1f71e0; text-decoration: none;">新しい会話を開始</a>
+            <span th:if="${currentUser != null}">
+                &nbsp;|&nbsp;
+                <a href="/logout" style="color: #1f71e0; text-decoration: none;">ログアウト</a>
+            </span>
         </div>
     </div>
 
@@ -438,6 +457,9 @@
         <div class="header">
             <div class="logo">AI 検証チャット</div>
             <div class="subtitle">複数のAIエージェントが議論して、信頼性の高い回答を提供します</div>
+            <div class="user-info" th:if="${currentUser != null}">
+                ログイン中: <strong th:text="${currentUser}"></strong>
+            </div>
         </div>
 
         <div class="main-container">
