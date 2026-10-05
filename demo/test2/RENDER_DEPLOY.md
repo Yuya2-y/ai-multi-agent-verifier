@@ -74,7 +74,9 @@ git push origin main
 ## 環境変数について
 
 - `GEMINI_API_KEY`: Google Gemini API キー（オプション）
+- `GEMINI_API_MODEL`: Gemini モデルID（デフォルト: `gemini-3.5-flash-lite`）
 - `GROQ_API_KEY`: Groq API キー（フォールバック用）
+- `GROQ_API_MODEL`: Groq モデルID（デフォルト: `openai/gpt-oss-120b`）
 - `PORT`: Render が自動設定（デフォルト: 10000）
 
 ## 詳細なドキュメント

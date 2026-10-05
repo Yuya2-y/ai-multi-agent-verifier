@@ -37,6 +37,12 @@ public class AiAgentService {
     @Value("${groq.api.key:${GROQ_API_KEY:}}")
     private String groqApiKey;
 
+    @Value("${gemini.api.model:gemini-3.5-flash-lite}")
+    private String geminiModel;
+
+    @Value("${groq.api.model:openai/gpt-oss-120b}")
+    private String groqModel;
+
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final ChatHistoryRepository chatHistoryRepository;
@@ -44,8 +50,7 @@ public class AiAgentService {
     private final Executor aiTaskExecutor;
     
     // GeminiのURL
-    private final String API_URL = 
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=";
+    private final String API_URL = "https://generativelanguage.googleapis.com/v1beta/models/";
 
     // 正しいGroqの窓口（APIエンドポイント）URL
     private final String GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
@@ -261,7 +266,7 @@ public class AiAgentService {
      * 【オリジナル】GeminiAPI呼び出し処理（リトライロジック含む）
      */
     private String callGemini(String systemPrompt, String userPrompt, boolean forceJson) throws Exception {
-        String completeUrl = API_URL + apiKey;
+        String completeUrl = API_URL + geminiModel + ":generateContent?key=" + apiKey;
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -323,7 +328,7 @@ public class AiAgentService {
 
         // リクエストボディの作成（OpenAI互換フォーマット）
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("model", "llama-3.3-70b-versatile"); // 無料で使える高性能モデル
+        requestBody.put("model", groqModel);
 
         List<Map<String, String>> messages = new ArrayList<>();
         messages.add(Map.of("role", "system", "content", systemPrompt));
